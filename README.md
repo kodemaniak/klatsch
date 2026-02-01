@@ -1,6 +1,6 @@
 # klatsch
 
-An implementation attempt at the Distributed Systems Challenge "[Gossip Gloomers](https://fly.io/dist-sys/)" on fly.io.
+An implementation attempt at the Distributed Systems Challenge "[Gossip Glomers](https://fly.io/dist-sys/)" on fly.io.
 
 We assume `maelstrom` to reside at `$HOME/Development/tools/maelstrom/`. Then you can run the tests with:
 
