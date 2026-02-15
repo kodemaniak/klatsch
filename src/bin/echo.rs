@@ -1,7 +1,7 @@
 #[derive(Debug, Default)]
 struct EchoNode {
     message_ids: AtomicU32,
-    node_id: Option<String>,
+    node_id: String,
 }
 
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -9,19 +9,16 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use klatsch::{Message, Node, main_loop};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(tag = "type")]
 enum EchoMessage {
-    #[serde(rename = "init")]
-    Init {
-        msg_id: u32,
-        node_id: String,
-        node_ids: Vec<String>,
-    },
-    #[serde(rename = "init_ok")]
-    InitOk { in_reply_to: u32 },
     #[serde(rename = "echo")]
     Echo { msg_id: u32, echo: String },
+}
+
+#[derive(Debug, Serialize)]
+#[serde(tag = "type")]
+enum EchoResponse {
     #[serde(rename = "echo_ok")]
     EchoOk {
         msg_id: u32,
@@ -31,50 +28,38 @@ enum EchoMessage {
 }
 
 impl Node for EchoNode {
-    type B = EchoMessage;
+    type M = EchoMessage;
+    type R = EchoResponse;
 
-    fn handle(&mut self, msg: Message<Self::B>) -> Message<Self::B> {
+    fn handle(&mut self, msg: Message<Self::M>) -> Message<Self::R> {
         let src = msg.src;
         match msg.body {
-            EchoMessage::Init {
-                msg_id,
-                node_id,
-                node_ids: _,
-            } if self.node_id.is_none() => {
-                self.node_id = Some(node_id);
-                let ok = EchoMessage::InitOk {
-                    in_reply_to: msg_id,
-                };
-
-                Message {
-                    src: self.node_id.as_ref().unwrap().clone(),
-                    dest: src,
-                    body: ok,
-                }
-            }
             EchoMessage::Echo { msg_id, echo } => {
                 let id = self.message_ids.fetch_add(1, Ordering::Relaxed);
-                let echo_ok = EchoMessage::EchoOk {
+                let echo_ok = EchoResponse::EchoOk {
                     msg_id: id,
                     echo,
                     in_reply_to: msg_id,
                 };
                 Message {
-                    src: self.node_id.as_ref().unwrap().clone(),
+                    src: self.node_id.clone(),
                     dest: src,
                     body: echo_ok,
                 }
             }
-            EchoMessage::InitOk { .. } => panic!("received init_ok, but should not"), // TODO: we should return Result
-            _ => panic!("something unexpected happened"),
+        }
+    }
+
+    fn new(node_id: &str, _node_ids: &Vec<String>) -> Self {
+        EchoNode {
+            message_ids: AtomicU32::default(),
+            node_id: node_id.into(),
         }
     }
 }
 
 fn main() -> anyhow::Result<()> {
-    let mut node = EchoNode::default();
-
-    main_loop(&mut node)?;
+    main_loop::<EchoNode>()?;
 
     Ok(())
 }
