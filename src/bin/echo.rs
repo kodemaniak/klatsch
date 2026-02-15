@@ -1,13 +1,13 @@
+use std::sync::atomic::{AtomicU32, Ordering};
+
+use klatsch::{Message, Node, main_loop};
+use serde::{Deserialize, Serialize};
+
 #[derive(Debug, Default)]
 struct EchoNode {
     message_ids: AtomicU32,
     node_id: String,
 }
-
-use std::sync::atomic::{AtomicU32, Ordering};
-
-use klatsch::{Message, Node, main_loop};
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type")]
