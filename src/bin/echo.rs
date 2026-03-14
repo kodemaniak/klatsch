@@ -1,11 +1,9 @@
-use std::sync::atomic::{AtomicU32, Ordering};
-
 use klatsch::{Message, Node, main_loop};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default)]
 struct EchoNode {
-    message_ids: AtomicU32,
+    msg_id: u32,
     node_id: String,
 }
 
@@ -35,12 +33,14 @@ impl Node for EchoNode {
         let src = msg.src;
         match msg.body {
             EchoMessage::Echo { msg_id, echo } => {
-                let id = self.message_ids.fetch_add(1, Ordering::Relaxed);
                 let echo_ok = EchoResponse::EchoOk {
-                    msg_id: id,
+                    msg_id: self.msg_id,
                     echo,
                     in_reply_to: msg_id,
                 };
+
+                self.msg_id += 1;
+
                 Message {
                     src: self.node_id.clone(),
                     dest: src,
@@ -52,7 +52,7 @@ impl Node for EchoNode {
 
     fn new(node_id: &str, _node_ids: &Vec<String>) -> Self {
         EchoNode {
-            message_ids: AtomicU32::default(),
+            msg_id: 0,
             node_id: node_id.into(),
         }
     }
