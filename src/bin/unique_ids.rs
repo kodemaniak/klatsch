@@ -48,6 +48,8 @@ impl Node for UniqueIdNode {
                     id: ulid,
                 };
 
+                self.msg_id += 1;
+
                 Message {
                     src: self.node_id.clone(),
                     dest: msg.src,
