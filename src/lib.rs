@@ -1,6 +1,6 @@
-use anyhow::bail;
+use anyhow::{Result, bail};
 use serde::{Deserialize, Serialize};
-use std::io::stdin;
+use std::{io::stdin, sync::mpsc};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Message<B> {
@@ -10,12 +10,20 @@ pub struct Message<B> {
 }
 
 pub trait Node {
-    type M: for<'de> Deserialize<'de>;
+    type M: Serialize + for<'de> Deserialize<'de>;
     type R: Serialize;
 
     fn new(node_id: &str, node_ids: &Vec<String>) -> Self;
 
-    fn handle(&mut self, msg: Message<Self::M>) -> Message<Self::R>;
+    fn handle(&mut self, msg: Message<Self::M>) -> Result<()>;
+
+    fn send(&self, message: impl Serialize) -> Result<()> {
+        let response_json = serde_json::to_string(&message)?;
+        eprintln!("send: {}", response_json);
+        println!("{}", response_json);
+
+        Ok(())
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -56,10 +64,11 @@ pub fn main_loop<N: Node>() -> anyhow::Result<()> {
                 Ok(line) => {
                     eprintln!("received: {}", &line);
                     let msg: Message<N::M> = serde_json::from_str(&line)?;
-                    let response = node.handle(msg);
-                    let response_json = serde_json::to_string(&response)?;
-                    eprintln!("response: {}", response_json);
-                    println!("{}", response_json);
+                    node.handle(msg)?;
+
+                    // let response_json = serde_json::to_string(&response)?;
+                    // eprintln!("response: {}", response_json);
+                    // println!("{}", response_json);
                 }
                 Err(e) => eprintln!("error: {}", e),
             }

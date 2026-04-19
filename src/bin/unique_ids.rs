@@ -1,3 +1,5 @@
+use anyhow::Result;
+
 use klatsch::{Message, Node, main_loop};
 use serde::{Deserialize, Serialize};
 use ulid::Ulid;
@@ -7,7 +9,7 @@ struct UniqueIdNode {
     node_id: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
 enum UniqueIdMessage {
     #[serde(rename = "generate")]
@@ -37,7 +39,7 @@ impl Node for UniqueIdNode {
         }
     }
 
-    fn handle(&mut self, msg: Message<Self::M>) -> Message<Self::R> {
+    fn handle(&mut self, msg: Message<Self::M>) -> Result<()> {
         match msg.body {
             UniqueIdMessage::Generate { msg_id } => {
                 let ulid = Ulid::new();
@@ -50,11 +52,13 @@ impl Node for UniqueIdNode {
 
                 self.msg_id += 1;
 
-                Message {
+                self.send(Message {
                     src: self.node_id.clone(),
                     dest: msg.src,
                     body: response,
-                }
+                })?;
+
+                Ok(())
             }
         }
     }

@@ -1,3 +1,5 @@
+use anyhow::Result;
+
 use klatsch::{Message, Node, main_loop};
 use serde::{Deserialize, Serialize};
 
@@ -7,7 +9,7 @@ struct EchoNode {
     node_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Serialize, Debug, Deserialize)]
 #[serde(tag = "type")]
 enum EchoMessage {
     #[serde(rename = "echo")]
@@ -29,7 +31,7 @@ impl Node for EchoNode {
     type M = EchoMessage;
     type R = EchoResponse;
 
-    fn handle(&mut self, msg: Message<Self::M>) -> Message<Self::R> {
+    fn handle(&mut self, msg: Message<Self::M>) -> Result<()> {
         let src = msg.src;
         match msg.body {
             EchoMessage::Echo { msg_id, echo } => {
@@ -41,11 +43,13 @@ impl Node for EchoNode {
 
                 self.msg_id += 1;
 
-                Message {
+                self.send(Message {
                     src: self.node_id.clone(),
                     dest: src,
                     body: echo_ok,
-                }
+                })?;
+
+                Ok(())
             }
         }
     }
