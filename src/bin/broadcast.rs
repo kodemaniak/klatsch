@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::mpsc};
+use std::collections::HashMap;
 
 use anyhow::Result;
 use klatsch::{Message, Node, main_loop};
@@ -32,11 +32,11 @@ enum BroadcastMessage {
 #[serde(tag = "type")]
 enum BroadcastResponse {
     #[serde(rename = "topology_ok")]
-    TopologyOk { msg_id: u32, in_reply_to: u32 },
+    Topology { msg_id: u32, in_reply_to: u32 },
     #[serde(rename = "broadcast_ok")]
-    BroadcastOk { msg_id: u32, in_reply_to: u32 },
+    Broadcast { msg_id: u32, in_reply_to: u32 },
     #[serde(rename = "read_ok")]
-    ReadOk {
+    Read {
         msg_id: u32,
         in_reply_to: u32,
         messages: Vec<Value>,
@@ -48,7 +48,7 @@ impl Node for BroadcastNode {
 
     type R = BroadcastResponse;
 
-    fn new(node_id: &str, _node_ids: &Vec<String>) -> Self {
+    fn new(node_id: &str, _node_ids: &[String]) -> Self {
         Self {
             msg_id: 0,
             node_id: node_id.to_string(),
@@ -74,7 +74,7 @@ impl Node for BroadcastNode {
                     self.node_messages.insert(node.clone(), 0);
                 }
 
-                let response = BroadcastResponse::TopologyOk {
+                let response = BroadcastResponse::Topology {
                     msg_id: self.msg_id,
                     in_reply_to: msg_id,
                 };
@@ -119,7 +119,7 @@ impl Node for BroadcastNode {
 
                 eprintln!("message: {:?}", &self.messages);
 
-                let response = BroadcastResponse::BroadcastOk {
+                let response = BroadcastResponse::Broadcast {
                     msg_id: self.msg_id,
                     in_reply_to: msg_id,
                 };
@@ -135,7 +135,7 @@ impl Node for BroadcastNode {
                 Ok(())
             }
             BroadcastMessage::Read { msg_id } => {
-                let response = BroadcastResponse::ReadOk {
+                let response = BroadcastResponse::Read {
                     msg_id: self.msg_id,
                     in_reply_to: msg_id,
                     messages: self.messages.clone(),

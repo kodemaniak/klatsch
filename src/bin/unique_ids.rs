@@ -32,7 +32,7 @@ impl Node for UniqueIdNode {
 
     type R = UniqueIdResponse;
 
-    fn new(node_id: &str, _node_ids: &Vec<String>) -> Self {
+    fn new(node_id: &str, _node_ids: &[String]) -> Self {
         Self {
             msg_id: 0,
             node_id: node_id.to_string(),

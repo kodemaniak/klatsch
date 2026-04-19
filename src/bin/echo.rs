@@ -54,7 +54,7 @@ impl Node for EchoNode {
         }
     }
 
-    fn new(node_id: &str, _node_ids: &Vec<String>) -> Self {
+    fn new(node_id: &str, _node_ids: &[String]) -> Self {
         EchoNode {
             msg_id: 0,
             node_id: node_id.into(),

@@ -1,6 +1,6 @@
 use anyhow::{Result, bail};
 use serde::{Deserialize, Serialize};
-use std::{io::stdin, sync::mpsc};
+use std::io::stdin;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Message<B> {
@@ -13,7 +13,7 @@ pub trait Node {
     type M: Serialize + for<'de> Deserialize<'de>;
     type R: Serialize;
 
-    fn new(node_id: &str, node_ids: &Vec<String>) -> Self;
+    fn new(node_id: &str, node_ids: &[String]) -> Self;
 
     fn handle(&mut self, msg: Message<Self::M>) -> Result<()>;
 
@@ -95,7 +95,7 @@ fn reply_from_init(init: &Message<InitMessage>) -> Message<InitOkMessage> {
         InitMessage::Init {
             msg_id,
             node_id,
-            node_ids: __,
+            node_ids: _,
         } => {
             let init_ok = InitOkMessage::InitOk {
                 in_reply_to: *msg_id,
